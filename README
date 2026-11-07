@@ -1,0 +1,91 @@
+
+GRPN Version 1.0 
+
+By Paul Wilkins
+
+GRPN is a graphical RPN calculator built using GTK 4.
+
+GRPN works with real numbers, complex numbers, matrices, and
+complex matrices.  Numbers can be displayed in 4 different
+radix modes, and complex numbers can be displayed in either
+Cartesian or polar form.
+
+Named variables can hold any calculator value. Type an apostrophe
+followed by a name and press Sto to copy the top stack value into the
+variable (for example, `'abc` then Sto). Enter the same name and press
+Rcl to push a copy of the stored value back onto the stack.
+The first ten new variable names also appear in the memory-button row
+above the keypad; clicking one of these buttons recalls that variable.
+Additional variables remain available through the Rcl command.
+
+GRPN is copyrighted under the terms of the GNU General Public
+License.  See the file LICENSE for more details.
+
+
+To build GRPN:
+
+1) Install a C compiler, make, pkg-config, the GTK 4 development
+   package, and the MPFR development package. On Debian/Ubuntu these
+   are `libgtk-4-dev` and `libmpfr-dev`; on Fedora they are
+   `gtk4-devel` and `mpfr-devel`.
+
+2) Run make.  
+
+3) Copy the executable, grpn, to its final installation directory,
+   for example /usr/local/bin.
+
+To produce a fully static executable, install static archives for GTK 4,
+MPFR, GMP, and all of their transitive dependencies, then run:
+
+    make static
+
+The result is `grpn-static`. Many Linux distributions do not ship static
+GTK archives in their standard development packages; in that case GTK and
+its dependencies must be built with static-library support first. The
+`static-check` target reports missing primary archives before linking.
+
+Python/PyQt5 version
+--------------------
+
+An equivalent Python implementation is provided in `grpn_py.py`. It uses
+Python `Decimal` arithmetic at 77-digit precision and PyQt5 for the GUI.
+It has the same keypad, keyboard input, typed commands, display, Options
+window, variables and memory buttons, undo, and command-line options
+(-fn, -btn-fn, -disp-fn, -rows, -cols, -b) as the C version. Install
+PyQt5 and run it with:
+
+    sudo apt install python3-pyqt5
+    python3 grpn_py.py
+
+The calculation engine can also be imported independently of the GUI:
+
+    from grpn_py import Calculator, Matrix
+    calc = Calculator()
+    calc.type_text("2 3+")              # keys as typed; "\n" is Enter
+    print(calc.format(calc.stack[-1]))   # 5
+    lines, cursor = calc.display(30, 8)  # the display as text
+
+Differences from the C version: the Python version shows the magnitude
+of a complex zero as 0 rather than NaN, and labels the power keys x²,
+yˣ, 10ˣ and eˣ.
+
+GRPN uses MPFR with a default precision of 256 bits (approximately
+77 decimal digits). The display shows 12 significant digits by default;
+the Options window can change this from 1 to 70 digits. The Options
+window can also switch to engineering notation (as on HP 48 series
+calculators: exponent a multiple of 3, all digits shown, e.g.
+12.3450000000E3). Thousands separators are enabled by default and can
+be disabled in the Options window. The precision can be changed at compile time by
+overriding `REAL_PRECISION_BITS` in real.h.
+
+
+
+GRPN can be found at the following locations:
+sunsite.unc.edu /pub/Linux/apps/math/calc
+wilkins.ne.mediaone.net /pub
+
+
+That's it.  Good Luck.
+
+Paul
+paul.wilkins@analog.com
