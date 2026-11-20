@@ -3,7 +3,7 @@ GRPN Version 1.0
 
 By Paul Wilkins
 
-GRPN is a graphical RPN calculator built using Qt 5.
+GRPN is a graphical RPN calculator built using Qt 5 or Qt 6.
 
 GRPN works with real numbers, complex numbers, matrices, and
 complex matrices.  Numbers can be displayed in 4 different
@@ -24,25 +24,30 @@ License.  See the file LICENSE for more details.
 
 To build GRPN:
 
-1) Install C and C++ compilers, make, pkg-config, the Qt 5 (5.11 or
-   later) Widgets development package, and the MPFR development
-   package. On Debian/Ubuntu these are `qtbase5-dev` and `libmpfr-dev`;
-   on Fedora they are `qt5-qtbase-devel` and `mpfr-devel`.
+1) Install C and C++ compilers, make, pkg-config, the Qt Widgets
+   development package (Qt 5.11 or later, or Qt 6), and the MPFR
+   development package. On Debian/Ubuntu these are `qtbase5-dev` (or
+   `qt6-base-dev`) and `libmpfr-dev`; on Fedora they are
+   `qt5-qtbase-devel` (or `qt6-qtbase-devel`) and `mpfr-devel`.
 
    The calculator core is C and uses only MPFR; the user interface
    (main.cpp, lcd_qt.cpp, setup_buttons.cpp, setup_menu.cpp,
    options.cpp, help.cpp) is C++ and Qt.  gui.h is the interface
    between the two.
 
-2) Run make.  
+2) Run make.  This builds against Qt 5; to use Qt 6 instead, run
+
+       make QT=6
+
+   Switching QT between builds recompiles the Qt parts automatically.
 
 3) Copy the executable, grpn, to its final installation directory,
    for example /usr/local/bin.
 
-To produce a fully static executable, install static archives for Qt 5,
+To produce a fully static executable, install static archives for Qt,
 MPFR, GMP, and all of their transitive dependencies, then run:
 
-    make static
+    make static          (or: make QT=6 static)
 
 The result is `grpn-static`. Many Linux distributions do not ship static
 Qt archives in their standard development packages; in that case Qt and
