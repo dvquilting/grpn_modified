@@ -131,8 +131,9 @@ static char *print_std(Real *a,int digits){
 }
 
 /* Engineering notation in the style of the HP 48 ENG mode: `digits`
-   significant digits (trailing zeros kept), an exponent that is a multiple
-   of 3, and 1 to 3 digits before the decimal point, e.g. 12.3456789012E3 */
+   significant digits (trailing zeros of the fraction removed), an exponent
+   that is a multiple of 3, and 1 to 3 digits before the decimal point,
+   e.g. 12.3456789012E3, 12.345E3 */
 static char *print_eng(Real *a,int digits){
    char *d,*out,*p; long exp10,engExp; int negative,intDigits,len,i;
    if(mpfr_zero_p(a->num)){
@@ -144,7 +145,11 @@ static char *print_eng(Real *a,int digits){
    len=digits+intDigits+32; out=malloc(len); if(!out){perror("malloc");exit(EXIT_FAILURE);}
    p=out; if(negative)*p++='-';
    for(i=0;i<intDigits;i++) *p++= i<digits?d[i]:'0';
-   if(digits>intDigits){ *p++='.'; for(i=intDigits;i<digits;i++) *p++=d[i]; }
+   if(digits>intDigits){
+      int last=digits;
+      while(last>intDigits && d[last-1]=='0') last--;   /* strip trailing zeros */
+      if(last>intDigits){ *p++='.'; for(i=intDigits;i<last;i++) *p++=d[i]; }
+   }
    snprintf(p,len-(p-out),"E%ld",engExp);
    free(d); return out;
 }

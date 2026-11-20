@@ -999,8 +999,9 @@ def _print_std(v, digits):
 
 
 def _print_eng(v, digits):
-    """HP 48 ENG mode: `digits` significant digits (trailing zeros kept),
-    exponent a multiple of 3, 1 to 3 digits before the point."""
+    """HP 48 ENG mode: `digits` significant digits (trailing zeros of the
+    fraction removed), exponent a multiple of 3, 1 to 3 digits before the
+    point."""
     if not v:
         d, x, negative = '0' * digits, 0, False
     else:
@@ -1009,8 +1010,9 @@ def _print_eng(v, digits):
     int_digits = x - eng_exp + 1
     out = '-' if negative else ''
     out += ''.join(d[i] if i < digits else '0' for i in range(int_digits))
-    if digits > int_digits:
-        out += '.' + d[int_digits:]
+    frac = d[int_digits:digits].rstrip('0')
+    if frac:
+        out += '.' + frac
     return out + 'E%d' % eng_exp
 
 

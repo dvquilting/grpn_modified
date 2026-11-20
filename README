@@ -73,8 +73,8 @@ GRPN uses MPFR with a default precision of 256 bits (approximately
 77 decimal digits). The display shows 12 significant digits by default;
 the Options window can change this from 1 to 70 digits. The Options
 window can also switch to engineering notation (as on HP 48 series
-calculators: exponent a multiple of 3, all digits shown, e.g.
-12.3450000000E3). Thousands separators are enabled by default and can
+calculators: exponent a multiple of 3, trailing zeros omitted, e.g.
+12.345E3). Thousands separators are enabled by default and can
 be disabled in the Options window. The precision can be changed at compile time by
 overriding `REAL_PRECISION_BITS` in real.h.
 
