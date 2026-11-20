@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <gtk/gtk.h>
 
 #include "buttons.h"
 #include "editor.h"
@@ -29,9 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "funcs.h"
 #include "mode.h"
 #include "undo.h"
+#include "gui.h"
 
-
-extern void baseCmdCB(GtkWidget *, gpointer);
 
 FuncInfo invisible1[] = {
    { "Hex", "hex", "Hexidecimal display mode.",
@@ -60,7 +58,7 @@ FuncInfo invisible1[] = {
       genericButtonCB, (void *)UndoStack },
    { "Clear", "clear", "Clears and removes all numbers on the stack.",
       genericButtonCB, (void *)clearLCD },
-   { "Quit", "quit", "Quit GRPN.", genericButtonCB, (void *)exit }
+   { "Quit", "quit", "Quit GRPN.", genericButtonCB, (void *)quitApplication }
 };
 FuncInfo row2[] = {
    { "Enter", "dup", "Copy the number on the top of the stack.",

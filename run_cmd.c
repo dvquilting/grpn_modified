@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /* run_cmd.c  by Paul Wilkins */
 
 #include <stdio.h>
-#include <gtk/gtk.h>
+#include <string.h>
 
 #include "buttons.h"
 #include "funcs.h"
@@ -36,7 +36,7 @@ void runCmd(char *line){
    int cmdLen;
    int lineLen;
    FuncInfo *fi;
-   void (*CallBack)(GtkWidget *, gpointer);
+   void (*CallBack)(void *, void *);
    int found = 0;  /* how many matching commands have we found */
 
    if(*line == '"' || *line == '\'') line++;
@@ -78,7 +78,7 @@ MATCH_DONE:
 
       /* run the command */
       CallBack = fi->CB;
-      CallBack((GtkWidget *)NULL, (gpointer)fi);
+      CallBack(NULL, fi);
 
    } else if(found > 1){
       sprintf(getStringError(), "%s: Ambigious command name.", line);

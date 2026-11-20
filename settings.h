@@ -12,7 +12,15 @@ of the License, or (at your option) any later version.
 #ifndef __SETTINGS_H
 #define __SETTINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void loadSettings(void);
 void saveSettings(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

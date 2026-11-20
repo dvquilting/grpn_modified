@@ -22,13 +22,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __FUNCS_H
 #define __FUNCS_H
 
-#include <gtk/gtk.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _FuncInfo {
    char *name;
    char *cmd;
    char *help;
-   void (*CB)(GtkWidget *, gpointer);
+   void (*CB)(void *widget, void *data);
    void *data;
 };
 typedef struct _FuncInfo FuncInfo;
@@ -83,5 +85,8 @@ void MtrxStack();
 void StoreVariableStack(void);
 void RecallVariableStack(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

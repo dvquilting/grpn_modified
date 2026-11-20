@@ -20,13 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /* setup mode.c  by Paul Wilkins  2/8/98 */
 
 #include <stdio.h>
-#include <gtk/gtk.h>
+#include <string.h>
 
 #include "mode.h"
 #include "number.h"
 #include "complex.h"
-
-GtkWidget *ModeDisplay = NULL;
 
 int radixMode = RADIANS;
 int polarMode = RECTANGULAR;
@@ -57,7 +55,7 @@ int getBaseMode(){
 }
 
 
-char *getModeDisplayString(){
+char *getModeDisplayString(void){
    int rad_mode, pol_mode, base_mode;
    static char buf[256];
 
@@ -107,24 +105,4 @@ char *getModeDisplayString(){
    }
 
    return buf;
-}
-
-void refreshModeDisplay(){
-   char *str;
-
-   str = getModeDisplayString();
-   gtk_label_set_text(GTK_LABEL(ModeDisplay), str);
-
-}
-
-GtkWidget *setupModeDisplay(GtkWidget *parent){
-
-   ModeDisplay = gtk_label_new(" ");
-   gtk_box_append(GTK_BOX(parent), ModeDisplay);
-
-
-   /* set the string */
-   refreshModeDisplay();
-
-   return ModeDisplay;
 }

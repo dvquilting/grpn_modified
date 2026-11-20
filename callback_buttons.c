@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /* callback_buttons.c  by Paul Wilkins */
 
 #include <stdio.h>
-#include <gtk/gtk.h>
+#include <stdint.h>
 
 #include "buttons.h"
 #include "funcs.h"
@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 /* the generic button callback function */
-void genericButtonCB(GtkWidget *w, gpointer clientData){
+void genericButtonCB(void *w, void *clientData){
    (void)w;
    FuncInfo *fi = (FuncInfo *)clientData;
    void (*func)();
@@ -47,13 +47,13 @@ void genericButtonCB(GtkWidget *w, gpointer clientData){
 }
 
 /* the null button callback function */
-void nullButtonCB(GtkWidget *w, gpointer clientData){
+void nullButtonCB(void *w, void *clientData){
    (void)w; (void)clientData;
    printf("Sorry: Unimpilmented feature\n");
 }
 
 /* inserts a char into the edit buffer */
-void enterNumCB(GtkWidget *w, gpointer clientData){
+void enterNumCB(void *w, void *clientData){
    int tmp;
    FuncInfo *fi = (FuncInfo *)clientData;
 
@@ -61,7 +61,7 @@ void enterNumCB(GtkWidget *w, gpointer clientData){
    resetError();
 
    (void)w;
-   tmp = GPOINTER_TO_INT(fi->data);
+   tmp = (int)(intptr_t)fi->data;
    insertEditor(tmp);
    redrawLCD();
 }
@@ -69,7 +69,7 @@ void enterNumCB(GtkWidget *w, gpointer clientData){
 
 /* the +/- key needs a special callback */
 /* this is unnessisarily complicated */
-void plusMinusCB(GtkWidget *w, gpointer clientData){
+void plusMinusCB(void *w, void *clientData){
    char *p, *line;
    int i, pos, foundE;
 

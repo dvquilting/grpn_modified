@@ -20,103 +20,60 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /* callback_menu.h  by Paul Wilkins 3/15/97 */
 
 #include <stdio.h>
-#include <gtk/gtk.h>
+#include <stdlib.h>
+#include <stdint.h>
 
-#include "menu.h"
 #include "lcd.h"
 #include "mode.h"
 #include "funcs.h"
-#include "help.h"
-#include "complex.h"
+#include "buttons.h"
 #include "number.h"
-#include "options.h"
+#include "constant.h"
+#include "stack.h"
+#include "undo.h"
+#include "gui.h"
 
-/* quit the program */
-void quitCB(gpointer data){
-   (void)data;
-   GApplication *app = g_application_get_default();
-   if(app) g_application_quit(app);
+/* set up the calculator core */
+int initCalculator(void){
+   setup_constant();
+   initUndoSystem();
+   return setup_stack();
 }
-
-/* clear the stack */
-void clearCB(gpointer data){
-   (void)data;
-
-   clearLCD();
-
-   /* refresh the display */
-   redrawLCD();
-
-}
-
-
-void licenseCB(gpointer data){
-   (void)data;
-   license_popup();
-}
-
-void helpCB(gpointer data){
-   (void)data;
-   help_popup();
-}
-
 
 /* change the base we use to display the numbers */
-void baseCB(gpointer clientData){
+void baseCB(int base){
 
-   setBaseMode(GPOINTER_TO_INT(clientData));
+   setBaseMode(base);
 
    /* refresh the display */
    redrawLCD();
    refreshModeDisplay();
 }
 
-void baseCmdCB(GtkWidget *w, gpointer clientData){
-   (void)w;
+/* the hex, dec, oct and bin commands */
+void baseCmdCB(void *w, void *clientData){
    FuncInfo *fi = (FuncInfo *)clientData;
+   (void)w;
 
-   /* store the mode */
-   baseCB(fi->data);
-
-   /* TODO: set the toggles in the buttons */
-   if(optWindow){
-      gtk_check_button_set_active(GTK_CHECK_BUTTON(optHexBtn), 
-	 getBaseMode() == HEXIDECIMAL ? TRUE : FALSE);
-      gtk_check_button_set_active(GTK_CHECK_BUTTON(optDecBtn), 
-	 getBaseMode() == DECIMAL ? TRUE : FALSE);
-      gtk_check_button_set_active(GTK_CHECK_BUTTON(optOctBtn), 
-	 getBaseMode() == OCTAL ? TRUE : FALSE);
-      gtk_check_button_set_active(GTK_CHECK_BUTTON(optBinBtn), 
-	 getBaseMode() == BINARY ? TRUE : FALSE);
-   }
-}
-
-void baseToggleCB(GtkWidget *widget, gpointer data){
-   if(gtk_check_button_get_active(GTK_CHECK_BUTTON(widget))){
-      baseCB(data);
-   }
+   /* store the mode; refreshModeDisplay() also updates the
+      Options window if it is open */
+   baseCB((int)(intptr_t)fi->data);
 }
 
 /* change the radix mode we use to display the numbers */
-void radixCB(gpointer clientData){
+void radixCB(int radix){
    
-   setRadixMode(GPOINTER_TO_INT(clientData));
+   setRadixMode(radix);
 
    /* refresh the display */
    redrawLCD();
    refreshModeDisplay();
 }
 
-void radixToggleCB(GtkWidget *widget, gpointer data){
-   if(gtk_check_button_get_active(GTK_CHECK_BUTTON(widget))){
-      radixCB(data);
-   }
-}
-
 /* change the coordinate mode we use to display the numbers */
-void cmodeCB(gpointer clientData){
+void cmodeCB(int cmode){
    
-   switch(GPOINTER_TO_INT(clientData)){
+   switch(cmode){
       case RECTANGULAR:
          setPolarMode(RECTANGULAR);
          break;
@@ -124,29 +81,11 @@ void cmodeCB(gpointer clientData){
          setPolarMode(POLAR);
          break;
       default:
-         fprintf(stderr, "Error: radixCB: i shouldn't get here\n");
+         fprintf(stderr, "Error: cmodeCB: i shouldn't get here\n");
          exit(0);
    }
 
    /* refresh the display */
    redrawLCD();
    refreshModeDisplay();
-}
-
-void cmodeToggleCB(GtkWidget *widget, gpointer data){
-   if(gtk_check_button_get_active(GTK_CHECK_BUTTON(widget))){
-      cmodeCB(data);
-   }
-}
-
-void engNotationToggleCB(GtkWidget *widget, gpointer data){
-   (void)data;
-   setEngNotation(gtk_check_button_get_active(GTK_CHECK_BUTTON(widget)));
-   redrawLCD();
-}
-
-void separatorsToggleCB(GtkWidget *widget, gpointer data){
-   (void)data;
-   setThousandsSeparators(gtk_check_button_get_active(GTK_CHECK_BUTTON(widget)));
-   redrawLCD();
 }

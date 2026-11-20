@@ -22,15 +22,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __LCD_H
 #define __LCD_H
 
-#include <gtk/gtk.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* display area in characters */
 extern int lcdWidth;
 extern int lcdHeight;
+/* lcdHeight rows of lcdWidth characters each (not NUL terminated) */
+extern char **lcdText;
 
-GtkWidget *setupLCD(GtkWidget *, int, int, char *);
-void redrawLCD();
-void clearLCD();
+/* set the display size in characters, reallocating the text if needed */
+void resizeLCD(int cols, int rows);
+/* recompute lcdText from the stack if it is out of date */
+void updateLCD(void);
+void redrawLCD(void);
+void clearLCD(void);
 
 void setThousandsSeparators(int);
 int getThousandsSeparators(void);
@@ -43,6 +50,10 @@ void setEngNotation(int);
 int getEngNotation(void);
 void setLCDFontSize(int);
 int getLCDFontSize(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

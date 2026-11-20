@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "funcs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* size of a button in pixels */
 #define BUTTON_SIZE 30
 
@@ -37,12 +41,15 @@ extern struct RowInfo rowinf[];
 extern int NumButtonRows;
 extern int NumFunctionRows;
 
-GtkWidget *setupButtons(GtkWidget *parent);
+extern void genericButtonCB(void *, void *);
+extern void nullButtonCB(void *, void *);
+extern void enterNumCB(void *, void *);
+extern void plusMinusCB(void *, void *);
+extern void baseCmdCB(void *, void *);
 
-extern void genericButtonCB(GtkWidget *, gpointer);
-extern void nullButtonCB(GtkWidget *, gpointer);
-extern void enterNumCB(GtkWidget *, gpointer);
-extern void plusMinusCB(GtkWidget *, gpointer);
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

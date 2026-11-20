@@ -22,6 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __EDITOR_H
 #define __EDITOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int isEditingEditor();
 int cursorPosEditor();
 
@@ -37,6 +41,10 @@ void leftEditor();
 void cancelEditor();
 void setCursorPosEditor(int pos);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

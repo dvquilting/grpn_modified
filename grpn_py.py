@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """grpn_py.py -- GRPN, a graphical RPN calculator, in Python and PyQt5.
 
-A Python port of the GRPN C/GTK 4 program by Paul Wilkins.  It works with
+A Python port of the GRPN C/Qt 5 program by Paul Wilkins.  It works with
 real numbers, complex numbers and matrices; displays in binary, octal,
 decimal or hexadecimal; uses degrees or radians; shows complex numbers in
 rectangular or polar form; and supports named variables, undo, and typed

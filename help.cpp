@@ -17,11 +17,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <gtk/gtk.h>
+#include <QDialog>
+#include <QFontDatabase>
+#include <QMainWindow>
+#include <QPlainTextEdit>
+#include <QPointer>
+#include <QPushButton>
+#include <QString>
+#include <QVBoxLayout>
 
-#include "help.h"
+#include "gui.h"
 #include "funcs.h"
 #include "buttons.h"
 #include "license.h"
@@ -88,56 +93,49 @@ Available commands:\n\
 <space>     Push a number onto the top of the stack.\n\
 "
 
-static void popup_destroyed(GtkWidget *widget, gpointer data){
-   (void)widget;
-   *(GtkWidget **)data = NULL;
+/* a window showing txt; *dialog is cleared when it is closed */
+static void popup_window(QPointer<QDialog> &dialog, const QString &txt, const char *title){
+   QVBoxLayout *vbox;
+   QPlainTextEdit *view;
+   QPushButton *button;
+
+   if(!dialog){
+      dialog=new QDialog(mainWindow());
+      dialog->setWindowTitle(title);
+      dialog->setAttribute(Qt::WA_DeleteOnClose);
+      dialog->resize(470,470);
+      vbox=new QVBoxLayout(dialog);
+      vbox->setContentsMargins(5,5,5,5);
+      vbox->setSpacing(5);
+      view=new QPlainTextEdit(txt);
+      view->setReadOnly(true);
+      view->setLineWrapMode(QPlainTextEdit::NoWrap);
+      view->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+      vbox->addWidget(view);
+      button=new QPushButton("Dismiss");
+      QObject::connect(button,&QPushButton::clicked,dialog.data(),&QDialog::close);
+      vbox->addWidget(button);
+   }
+   dialog->show();
+   dialog->raise();
+   dialog->activateWindow();
 }
 
-void popup_window(GtkWidget **dialog, char *txt, char *title){
-   GtkWidget *vbox, *scrolled, *view, *button;
-   if(*dialog){ gtk_window_present(GTK_WINDOW(*dialog)); return; }
-   *dialog=gtk_window_new(); gtk_window_set_title(GTK_WINDOW(*dialog),title);
-   gtk_window_set_default_size(GTK_WINDOW(*dialog),470,470);
-   g_signal_connect(*dialog,"destroy",G_CALLBACK(popup_destroyed),dialog);
-   vbox=gtk_box_new(GTK_ORIENTATION_VERTICAL,5); gtk_widget_set_margin_start(vbox,5);
-   gtk_widget_set_margin_end(vbox,5); gtk_widget_set_margin_top(vbox,5); gtk_widget_set_margin_bottom(vbox,5);
-   gtk_window_set_child(GTK_WINDOW(*dialog),vbox);
-   scrolled=gtk_scrolled_window_new(); gtk_widget_set_vexpand(scrolled,TRUE); gtk_box_append(GTK_BOX(vbox),scrolled);
-   view=gtk_text_view_new(); gtk_text_view_set_editable(GTK_TEXT_VIEW(view),FALSE); gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view),FALSE);
-   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(view)),txt,-1); gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),view);
-   button=gtk_button_new_with_label("Dismiss"); g_signal_connect_swapped(button,"clicked",G_CALLBACK(gtk_window_destroy),*dialog);
-   gtk_box_append(GTK_BOX(vbox),button); gtk_window_present(GTK_WINDOW(*dialog));
+void licensePopup(void){
+   static QPointer<QDialog> dialog;
+   popup_window(dialog, LICENSE_TXT, "License");
 }
- 
 
-void license_popup(){
-   static GtkWidget *dialog = NULL;
- 
-   popup_window(&dialog, LICENSE_TXT, "License");
-}
- 
- 
-
-void help_popup(){
- 
+void helpPopup(void){
+   static QPointer<QDialog> dialog;
+   QString text=HELP_TXT;
    int i, j;
-   char *htxt;
-   char *cmd;
-   GString *text;
-   static GtkWidget *dialog = NULL;
 
-   text=g_string_new(HELP_TXT);
    for(i=0; i<NumFunctionRows; i++){
       for(j=0; j<rowinf[i].numBtns; j++){
-         cmd=rowinf[i].fi[j].cmd;
-         if(cmd){
-            g_string_append_printf(text,"%-12s%s\n",cmd,rowinf[i].fi[j].help);
-         }
+         const char *cmd=rowinf[i].fi[j].cmd;
+         if(cmd) text+=QString::asprintf("%-12s%s\n",cmd,rowinf[i].fi[j].help);
       }
    }
-   htxt=strdup(text->str); g_string_free(text,TRUE);
-
-   popup_window(&dialog, htxt, "Help");
-
-   free(htxt);
+   popup_window(dialog, text, "Help");
 }

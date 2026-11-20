@@ -22,7 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __MODE_H
 #define __MODE_H
 
-#include <gtk/gtk.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define BINARY      0x1
 #define OCTAL       0x2
@@ -45,9 +47,19 @@ void setBaseMode(int);
 int getBaseMode();
 
 
-/* the mode display window */
-void refreshModeDisplay();
+/* text for the mode display, e.g. " Radians   Rectangular   Decimal" */
+char *getModeDisplayString(void);
 
-GtkWidget *setupModeDisplay(GtkWidget *);
+/* update the mode display (implemented by the GUI) */
+void refreshModeDisplay(void);
+
+/* mode changes made from the keypad, commands, or the Options window */
+void baseCB(int base);
+void radixCB(int radix);
+void cmodeCB(int cmode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

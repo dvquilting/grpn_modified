@@ -20,14 +20,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /* process_input.c  by Paul Wilkins 3/21/97 */
 
 #include <stdio.h>
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
 
 #include "process_input.h"
 #include "funcs.h"
 #include "lcd.h"
 #include "editor.h"
 #include "error.h"
+#include "gui.h"
 
 
 
@@ -36,32 +35,17 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
    char c;
 
    if(ksym == 0){
+      /* typed or pasted text: whitespace pushes, any other
+         character is handled as the key that types it */
       switch(chr){
          case ' ':
          case '\n':
+         case '\r':
          case '\t':
-	    keysym = GDK_KEY_space;
-	    break;
-         case '+':
-	    keysym = GDK_KEY_plus;
-	    break;
-         case '-':
-	    keysym = GDK_KEY_minus;
-	    break;
-         case '/':
-	    keysym = GDK_KEY_slash;
-	    break;
-         case '*':
-	    keysym = GDK_KEY_asterisk;
-	    break;
-         case '^':
-	    keysym = GDK_KEY_asciicircum;
-	    break;
-         case '!':
-	    keysym = GDK_KEY_exclam;
-	    break;
+            keysym = ' ';
+            break;
          default:
-            keysym = GDK_KEY_4;  /* just pick one */
+            keysym = (unsigned char)chr;
             break;
       }
    } else {
@@ -70,9 +54,9 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
 
    if(isCtrl){
       switch(keysym){
-         case GDK_KEY_c:
+         case 'c':
             /* quit */
-            exit(0);
+            quitApplication();
             break;
       }
 
@@ -87,45 +71,32 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
    /* process the line */
    switch(keysym){
 
-      case GDK_KEY_space:     /* if there is something in the buffer, then */
-      case GDK_KEY_KP_Space:  /* push it onto the stack, else duplicate the */
-      case GDK_KEY_Return:    /* element on the bottom of the stack */
-      case GDK_KEY_Tab:
-      case GDK_KEY_KP_Tab:
-      case GDK_KEY_KP_Enter:
-      case GDK_KEY_KP_Insert:
-      case GDK_KEY_Linefeed:
+      case ' ':              /* if there is something in the buffer, then */
+      case GRPN_KEY_Return:  /* push it onto the stack, else duplicate the */
+      case GRPN_KEY_Tab:     /* element on the bottom of the stack */
          PushStack();
          break;
 
-      case GDK_KEY_Begin:      /* used when editing the entry buffer */
-      case GDK_KEY_Home:
-      case GDK_KEY_Up:
-      case GDK_KEY_KP_Home:
-      case GDK_KEY_KP_Up:
+      case GRPN_KEY_Home:      /* used when editing the entry buffer */
+      case GRPN_KEY_Up:
          homeEditor();
          break;
 
-      case GDK_KEY_End:      /* used when editing the entry buffer */
-      case GDK_KEY_Down:
-      case GDK_KEY_KP_End:
-      case GDK_KEY_KP_Down:
+      case GRPN_KEY_End:      /* used when editing the entry buffer */
+      case GRPN_KEY_Down:
          endEditor();
          break;
 
-      case GDK_KEY_Right:      /* used when editing the entry buffer */
-      case GDK_KEY_KP_Right:
+      case GRPN_KEY_Right:      /* used when editing the entry buffer */
          rightEditor();
          break;
 
-      case GDK_KEY_Left:      /* used when editing the entry buffer */
-      case GDK_KEY_KP_Left:
+      case GRPN_KEY_Left:      /* used when editing the entry buffer */
          leftEditor();
          break;
 
-      case GDK_KEY_BackSpace:  /* delete the last entry in the stack */
-      case GDK_KEY_Delete:     /* OR backspace over the last char typed */
-      case GDK_KEY_KP_Delete:
+      case GRPN_KEY_BackSpace:  /* delete the last entry in the stack */
+      case GRPN_KEY_Delete:     /* OR backspace over the last char typed */
          if(isEditingEditor()){
             deleteEditor();
          } else {
@@ -133,12 +104,11 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
          }
          break;
 
-      case GDK_KEY_Escape:  /* clear the entry buffer */
+      case GRPN_KEY_Escape:  /* clear the entry buffer */
          cancelEditor();
          break;
 
-      case GDK_KEY_plus: 
-      case GDK_KEY_KP_Add:
+      case '+':
          c = getPrevEditor();
          if(c == 'e' || c == 'E'){
             insertEditor(bb);
@@ -147,8 +117,7 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
          }
          break;
 
-      case GDK_KEY_minus: 
-      case GDK_KEY_KP_Subtract:
+      case '-':
          c = getPrevEditor();
          if(c == 'e' || c == 'E'){
             insertEditor(bb);
@@ -157,29 +126,26 @@ void processInput(int ksym, int isCtrl, char bb, char chr){
          }
          break;
 
-      case GDK_KEY_asterisk: 
-      case GDK_KEY_KP_Multiply:
+      case '*':
          MulStack();
          break;
 
-      case GDK_KEY_slash: 
-      case GDK_KEY_KP_Divide:
+      case '/':
          DivStack();
          break;
 
-      case GDK_KEY_asciicircum:
+      case '^':
          PowStack();
          break;
 
-      case GDK_KEY_exclam:
+      case '!':
          FactStack();
          break;
 
       default:  /* catch everything that's left over */
 
          /* ascii characters */
-         if((keysym >= GDK_KEY_KP_Space && keysym <= GDK_KEY_KP_9) ||
-            (keysym >= GDK_KEY_space && keysym <= GDK_KEY_asciitilde)){
+         if(keysym >= ' ' && keysym <= '~'){
 
             insertEditor(bb);
          }
