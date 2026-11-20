@@ -20,7 +20,7 @@ OBJS = real.o complex.o matrix.o number.o \
 	main.o stack.o lcd.o setup_menu.o callback_menu.o \
 	process_input.o options.o \
 	setup_buttons.o callback_buttons.o editor.o \
-	error.o help.o mode.o undo.o variables.o
+	error.o help.o mode.o undo.o variables.o settings.o
 
 LIBS = `$(PKG_CONFIG) --libs $(PACKAGES)` -lm
 STATIC_LIBS = `$(PKG_CONFIG) --static --libs $(PACKAGES)` -lm

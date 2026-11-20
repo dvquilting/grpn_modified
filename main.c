@@ -11,6 +11,7 @@
 #include "undo.h"
 #include "buttons.h"
 #include "constant.h"
+#include "settings.h"
 
 static int rows=8, cols=30, draw_buttons=1;
 static char *button_font=NULL, *display_font=NULL;
@@ -33,6 +34,7 @@ static gboolean parse_args(int argc,char **argv){
    }
    return TRUE;
 }
+static void shutdown(GApplication *app,gpointer data){ (void)app; (void)data; saveSettings(); }
 static void activate(GtkApplication *app,gpointer data){
    GtkWidget *window=gtk_application_window_new(app), *vbox=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
    (void)data; gtk_window_set_title(GTK_WINDOW(window),"grpn"); gtk_window_set_child(GTK_WINDOW(window),vbox);
@@ -50,9 +52,10 @@ static void activate(GtkApplication *app,gpointer data){
 int main(int argc,char **argv){
    GtkApplication *app; int status;
    setlocale(LC_NUMERIC,"C"); if(!parse_args(argc,argv)) return EXIT_FAILURE;
-   setup_constant(); initUndoSystem();
+   setup_constant(); initUndoSystem(); loadSettings();
    if(!setup_stack()){ fprintf(stderr,"Error: Could not initialize data structures.\n"); return EXIT_FAILURE; }
    app=gtk_application_new("org.grpn.calculator",G_APPLICATION_DEFAULT_FLAGS);
    g_signal_connect(app,"activate",G_CALLBACK(activate),NULL);
+   g_signal_connect(app,"shutdown",G_CALLBACK(shutdown),NULL);   /* primary instance only */
    status=g_application_run(G_APPLICATION(app),0,NULL); g_object_unref(app); return status;
 }

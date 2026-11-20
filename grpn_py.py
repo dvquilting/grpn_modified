@@ -31,7 +31,9 @@ Software Foundation; either version 2 of the License, or (at your option)
 any later version.
 """
 
+import configparser
 import math
+import os
 import sys
 import decimal
 from decimal import Decimal, localcontext
@@ -1914,7 +1916,7 @@ try:
 except ImportError:            # the engine above works without PyQt5
     QtWidgets = None
 
-DEFAULT_LCD_FONT = 'DejaVu Sans Mono 12'
+DEFAULT_LCD_FAMILY = 'DejaVu Sans Mono'
 
 
 def _parse_font(spec, default_size=None):
@@ -2196,7 +2198,7 @@ if QtWidgets is not None:
 
     class MainWindow(QtWidgets.QMainWindow):
         def __init__(self, calc, rows=8, cols=30, draw_buttons=True,
-                     button_font=None, display_font=None):
+                     button_font=None, display_font=None, font_size=None):
             super().__init__()
             self.calc = calc
             self.options = self.help_dialog = self.license_dialog = None
@@ -2219,7 +2221,8 @@ if QtWidgets is not None:
             self.mode_label = QtWidgets.QLabel()
             self.mode_label.setAlignment(Qt.AlignCenter)
             vbox.addWidget(self.mode_label)
-            lcd_font = _parse_font(display_font or DEFAULT_LCD_FONT, 12)
+            # a size given with -disp-fn wins over the saved font size
+            lcd_font = _parse_font(display_font or DEFAULT_LCD_FAMILY, font_size or 12)
             lcd_font.setStyleHint(QtGui.QFont.Monospace)
             lcd_font.setFixedPitch(True)
             self.lcd = LcdWidget(self, calc, rows, cols, lcd_font)
@@ -2366,6 +2369,76 @@ def parse_args(argv):
     return opts
 
 
+# ---------------------------------------------------------------------------
+# Saved settings, shared with the C version: $XDG_CONFIG_HOME/grpn/grpn.conf
+# ---------------------------------------------------------------------------
+
+SETTINGS_GROUP = 'Options'
+_SETTING_CHOICES = {'base': (BINARY, OCTAL, DECIMAL, HEXADECIMAL),
+                    'radix': (DEGREES, RADIANS),
+                    'coordinates': (RECTANGULAR, POLAR)}
+_SETTING_ATTRS = {'coordinates': 'polar'}
+
+
+def settings_path():
+    config = os.environ.get('XDG_CONFIG_HOME') or os.path.join(os.path.expanduser('~'), '.config')
+    return os.path.join(config, 'grpn', 'grpn.conf')
+
+
+def load_settings(calc, path=None):
+    """Apply saved Options settings to calc and return the saved display
+    font size (None if there is none).  A missing file or a missing or
+    invalid value leaves the default in place."""
+    path = path or settings_path()
+    cp = configparser.ConfigParser(interpolation=None)
+    try:
+        if not cp.read(path, encoding='utf-8'):
+            return None
+    except (configparser.Error, OSError, UnicodeError) as e:
+        sys.stderr.write('grpn_py: could not read %s: %s\n' % (path, e))
+        return None
+    if not cp.has_section(SETTINGS_GROUP):
+        return None
+    opts = cp[SETTINGS_GROUP]
+    for key, choices in _SETTING_CHOICES.items():
+        value = opts.get(key, '').strip().lower()
+        for c in choices:
+            if value == c.lower():
+                setattr(calc, _SETTING_ATTRS.get(key, key), c)
+    for key, attr in (('thousands_separators', 'separators'), ('engineering_notation', 'eng')):
+        try:
+            value = opts.getboolean(key)
+        except ValueError:
+            value = None
+        if value is not None:
+            setattr(calc, attr, value)
+    font_size = None
+    try:
+        if 'display_digits' in opts:
+            calc.set_digits(opts.getint('display_digits'))
+        if 'font_size' in opts:
+            font_size = max(8, min(36, opts.getint('font_size')))
+    except ValueError:
+        pass
+    return font_size
+
+
+def save_settings(calc, font_size, path=None):
+    path = path or settings_path()
+    cp = configparser.ConfigParser(interpolation=None)
+    cp[SETTINGS_GROUP] = {
+        'base': calc.base, 'radix': calc.radix, 'coordinates': calc.polar,
+        'thousands_separators': 'true' if calc.separators else 'false',
+        'engineering_notation': 'true' if calc.eng else 'false',
+        'display_digits': str(calc.digits), 'font_size': str(font_size)}
+    try:
+        os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            cp.write(f, space_around_delimiters=False)
+    except OSError as e:
+        sys.stderr.write('grpn_py: could not save settings to %s: %s\n' % (path, e))
+
+
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     opts = parse_args(argv)
@@ -2377,9 +2450,13 @@ def main(argv=None):
         return 1
     app = QtWidgets.QApplication(argv[:1])
     app.setApplicationName('grpn')
-    window = MainWindow(Calculator(), **opts)
+    calc = Calculator()
+    font_size = load_settings(calc)
+    window = MainWindow(calc, font_size=font_size, **opts)
     window.show()
-    return app.exec_()
+    status = app.exec_()
+    save_settings(calc, window.lcd.font_size())
+    return status
 
 
 if __name__ == '__main__':
