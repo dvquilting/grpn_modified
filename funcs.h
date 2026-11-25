@@ -44,6 +44,8 @@ void PopStack();
 void PushStack();
 void DegRad();
 void HexDec();
+void EngToggle(void);
+void SepToggle(void);
 
 void PiStack();
 

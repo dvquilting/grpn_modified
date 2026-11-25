@@ -66,10 +66,14 @@ FuncInfo row2[] = {
    { "+/-", "neg", "Change sign.", plusMinusCB, NULL },
    { "DRG", "degrad", "Toggle degrees/radians.", genericButtonCB, (void *)DegRad },
    { "HXD", "hexdec", "Toggle hex/decimal", genericButtonCB, (void *)HexDec },
+   { "ENG", "eng", "Toggle engineering notation.", genericButtonCB, (void *)EngToggle },
+   { "SEP", "sep", "Toggle thousands separators.", genericButtonCB, (void *)SepToggle },
    { "EEX", NULL, "Mouse input: enter an exponent.",
       enterNumCB, (void *)'e' },
    { "DEL", NULL, "Mouse input: backspace.",
-      genericButtonCB, (void *)deleteEditor },
+      genericButtonCB, (void *)deleteEditor }
+};
+FuncInfo row3[] = {
    { "Drop", "drop", "Delete the number on the top of the stack.",
       genericButtonCB, (void *)PopStack },
    { "Swap", "swap", "Swap 2 numbers on the top of the stack.",
@@ -136,11 +140,12 @@ FuncInfo num0[] = {
       genericButtonCB, (void *)ExpStack }
 };
 
-int NumButtonRows = 5;
-int NumFunctionRows = 6;
+int NumButtonRows = 6;
+int NumFunctionRows = 7;
 
 struct RowInfo rowinf[] = {
-   { 12, 12, row2 },
+   { 8, 8, row2 },
+   { 6, 6, row3 },
    { 8, 8, num789 },
    { 8, 8, num456 },
    { 8, 8, num123 },

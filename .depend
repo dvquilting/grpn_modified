@@ -11,7 +11,7 @@ constant.o: constant.c real.h typedefs.h complex.h
 editor.o: editor.c editor.h funcs.h mode.h
 error.o: error.c error.h stack.h typedefs.h
 funcs.o: funcs.c stack.h typedefs.h number.h real.h complex.h matrix.h \
- funcs.h undo.h constant.h editor.h run_cmd.h error.h mode.h
+ funcs.h undo.h constant.h editor.h run_cmd.h error.h mode.h lcd.h
 lcd.o: lcd.c lcd.h mode.h number.h typedefs.h real.h complex.h matrix.h \
  stack.h editor.h error.h undo.h gui.h
 matrix.o: matrix.c matrix.h typedefs.h number.h real.h complex.h error.h \

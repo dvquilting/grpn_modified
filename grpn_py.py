@@ -1207,8 +1207,12 @@ ROW2 = [
     ('+/-', 'neg', 'Change sign.', 'pm', None),
     ('DRG', 'degrad', 'Toggle degrees/radians.', 'op', 'deg_rad'),
     ('HXD', 'hexdec', 'Toggle hex/decimal', 'op', 'hex_dec'),
+    ('ENG', 'eng', 'Toggle engineering notation.', 'op', 'toggle_eng'),
+    ('SEP', 'sep', 'Toggle thousands separators.', 'op', 'toggle_separators'),
     ('EEX', None, 'Mouse input: enter an exponent.', 'char', 'e'),
     ('DEL', None, 'Mouse input: backspace.', 'op', 'delete_editor'),
+]
+ROW3 = [
     ('Drop', 'drop', 'Delete the number on the top of the stack.', 'op', 'drop'),
     ('Swap', 'swap', 'Swap 2 numbers on the top of the stack.', 'op', 'swap'),
     ('Sto', 'sto', 'Store the top number under the entered variable name.', 'op',
@@ -1266,7 +1270,7 @@ HIDDEN = [
     ('Clear', 'clear', 'Clears and removes all numbers on the stack.', 'op', 'clear'),
     ('Quit', 'quit', 'Quit GRPN.', 'op', 'quit'),
 ]
-BUTTON_ROWS = [ROW2, NUM789, NUM456, NUM123, NUM0]
+BUTTON_ROWS = [ROW2, ROW3, NUM789, NUM456, NUM123, NUM0]
 COMMAND_ROWS = BUTTON_ROWS + [HIDDEN]
 
 MEMORY_BUTTON_COUNT = 10
@@ -1558,6 +1562,14 @@ class Calculator(Modes):
     def hex_dec(self):
         nxt = {BINARY: DECIMAL, DECIMAL: HEXADECIMAL, HEXADECIMAL: BINARY}
         self.set_base(nxt.get(self.base, self.base))
+
+    def toggle_eng(self):
+        self.eng = not self.eng
+        self._modes_changed()
+
+    def toggle_separators(self):
+        self.separators = not self.separators
+        self._modes_changed()
 
     # --- input line ----------------------------------------------------------
 

@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "run_cmd.h"
 #include "error.h"
 #include "mode.h"
+#include "lcd.h"
 
 void decomposeMtrx();
 void createMtrx();
@@ -134,6 +135,18 @@ void HexDec()
 	break;
     }
     
+    refreshModeDisplay();
+}
+
+void EngToggle(void)
+{
+    setEngNotation(!getEngNotation());
+    refreshModeDisplay();       /* also updates the Options window */
+}
+
+void SepToggle(void)
+{
+    setThousandsSeparators(!getThousandsSeparators());
     refreshModeDisplay();
 }
 
