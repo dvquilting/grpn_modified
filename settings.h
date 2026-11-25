@@ -19,6 +19,12 @@ extern "C" {
 void loadSettings(void);
 void saveSettings(void);
 
+/* $XDG_CONFIG_HOME/grpn, or ~/.config/grpn, as a malloc'd string;
+   NULL if there is no home directory */
+char *settingsDir(void);
+/* create dir and any missing parents; 0 on success */
+int makeDirs(char *dir);
+
 #ifdef __cplusplus
 }
 #endif

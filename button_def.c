@@ -78,6 +78,8 @@ FuncInfo row2[] = {
       genericButtonCB, (void *)StoreVariableStack },
    { "Rcl", "rcl", "Recall the entered variable onto the stack.",
       genericButtonCB, (void *)RecallVariableStack },
+   { "Purge", "purge", "Delete the entered variable.",
+      genericButtonCB, (void *)PurgeVariableStack },
    { "!", "fact", "Factorial (Gamma(x+1) for non-integers).",
       genericButtonCB, (void *)FactStack }
 };
@@ -138,7 +140,7 @@ int NumButtonRows = 5;
 int NumFunctionRows = 6;
 
 struct RowInfo rowinf[] = {
-   { 11, 11, row2 },
+   { 12, 12, row2 },
    { 8, 8, num789 },
    { 8, 8, num456 },
    { 8, 8, num123 },

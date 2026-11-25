@@ -84,6 +84,7 @@ void CplxStack();
 void MtrxStack();
 void StoreVariableStack(void);
 void RecallVariableStack(void);
+void PurgeVariableStack(void);
 
 #ifdef __cplusplus
 }

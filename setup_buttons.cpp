@@ -59,7 +59,6 @@ public:
 typedef QList<KeyButton *> KeyRow;
 
 static KeyRow memoryButtons;
-static int memoryButtonCount;
 
 /* every button in a row gets the same width, enough for its widest label */
 static void equalizeRow(const KeyRow &row){
@@ -68,17 +67,18 @@ static void equalizeRow(const KeyRow &row){
    for(KeyButton *b : row) b->setMinimumWidth(width);
 }
 
-static void variableAdded(const char *name, void *data){
-   KeyButton *button;
-   QString label=QString::fromUtf8(name);
+/* the memory buttons show the first variables, oldest first */
+static void variablesChanged(void *data){
+   int i;
    (void)data;
-   if(memoryButtonCount>=MEMORY_BUTTON_COUNT || memoryButtons.isEmpty()) return;
-   button=memoryButtons[memoryButtonCount++];
-   button->setText(label);
-   button->setEnabled(true);
-   QObject::connect(button,&QPushButton::clicked,[label]{
-      if(RecallVariableNamed(label.toUtf8().constData())) redrawLCD();
-   });
+   for(i=0;i<memoryButtons.size();i++){
+      const char *name=variableName(i);
+      QString label=name?QString::fromUtf8(name):QString();
+      /* the label shows '&' as itself rather than as a shortcut marker */
+      memoryButtons[i]->setText(QString(label).replace('&',"&&"));
+      memoryButtons[i]->setProperty("variable",label);
+      memoryButtons[i]->setEnabled(name!=NULL);
+   }
    equalizeRow(memoryButtons);
 }
 
@@ -103,10 +103,14 @@ QWidget *setupButtons(const char *font){
    layout->setSpacing(0);
 
    /* the first row holds buttons for variables saved with Sto */
-   memoryButtons.clear(); memoryButtonCount=0;
+   memoryButtons.clear();
    for(i=0;i<MEMORY_BUTTON_COUNT;i++){
       KeyButton *b=new KeyButton;
       b->setEnabled(false);
+      QObject::connect(b,&QPushButton::clicked,[b]{
+         QString name=b->property("variable").toString();
+         if(RecallVariableNamed(name.toUtf8().constData())) redrawLCD();
+      });
       memoryButtons.append(b);
    }
    rows.append(memoryButtons);
@@ -139,6 +143,7 @@ QWidget *setupButtons(const char *font){
       equalizeRow(row);
    }
 
-   setVariableAddedCallback(variableAdded,NULL);
+   setVariablesChangedCallback(variablesChanged,NULL);
+   variablesChanged(NULL);
    return keypad;
 }

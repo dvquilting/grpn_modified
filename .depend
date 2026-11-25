@@ -28,10 +28,10 @@ stack.o: stack.c stack.h typedefs.h number.h real.h complex.h matrix.h
 undo.o: undo.c undo.h error.h stack.h typedefs.h number.h real.h \
  complex.h matrix.h
 variables.o: variables.c variables.h editor.h error.h number.h typedefs.h \
- real.h complex.h matrix.h stack.h undo.h
+ real.h complex.h matrix.h settings.h stack.h undo.h
 help.o: help.cpp gui.h funcs.h buttons.h license.h
 lcd_qt.o: lcd_qt.cpp gui.h lcd.h editor.h process_input.h
-main.o: main.cpp gui.h mode.h settings.h
+main.o: main.cpp gui.h mode.h settings.h variables.h
 options.o: options.cpp gui.h mode.h lcd.h
 setup_buttons.o: setup_buttons.cpp gui.h buttons.h funcs.h lcd.h \
  variables.h

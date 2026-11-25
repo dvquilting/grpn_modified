@@ -32,7 +32,7 @@ static const char *const keys[K_COUNT]={"base","radix","coordinates","thousands_
    "engineering_notation","display_digits","font_size"};
 
 /* $XDG_CONFIG_HOME/grpn, or ~/.config/grpn; returns a malloc'd string or NULL */
-static char *settings_dir(void){
+char *settingsDir(void){
    const char *config=getenv("XDG_CONFIG_HOME"), *home; char *dir; size_t len;
    if(config && *config){
       len=strlen(config)+sizeof("/grpn"); dir=malloc(len);
@@ -46,7 +46,7 @@ static char *settings_dir(void){
    return dir;
 }
 static char *settings_file(void){
-   char *dir=settings_dir(), *path; size_t len;
+   char *dir=settingsDir(), *path; size_t len;
    if(!dir) return NULL;
    len=strlen(dir)+sizeof("/grpn.conf"); path=malloc(len);
    if(path) snprintf(path,len,"%s/grpn.conf",dir);
@@ -54,7 +54,7 @@ static char *settings_file(void){
 }
 
 /* create dir and any missing parents */
-static int make_dirs(char *dir){
+int makeDirs(char *dir){
    char *p;
    for(p=dir+1;*p;p++){
       if(*p=='/'){
@@ -142,12 +142,12 @@ static const char *choice_name(const Choice *c,int value){
 }
 
 void saveSettings(void){
-   char *dir=settings_dir(), *path=settings_file(); const char *s; FILE *f; int ok;
+   char *dir=settingsDir(), *path=settings_file(); const char *s; FILE *f; int ok;
    if(!dir || !path){
       fprintf(stderr,"grpn: could not save settings: no home directory\n");
       free(dir); free(path); return;
    }
-   if(make_dirs(dir)!=0 || !(f=fopen(path,"w"))){
+   if(makeDirs(dir)!=0 || !(f=fopen(path,"w"))){
       fprintf(stderr,"grpn: could not save settings to %s: %s\n",path,strerror(errno));
       free(dir); free(path); return;
    }

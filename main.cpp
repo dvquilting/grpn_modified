@@ -24,6 +24,7 @@ of the License, or (at your option) any later version.
 #include "gui.h"
 #include "mode.h"
 #include "settings.h"
+#include "variables.h"
 
 static int rows=8, cols=30, draw_buttons=1;
 static char *button_font=NULL, *display_font=NULL;
@@ -111,6 +112,7 @@ int main(int argc,char **argv){
 
    loadSettings();
    if(!initCalculator()){ fprintf(stderr,"Error: Could not initialize data structures.\n"); return EXIT_FAILURE; }
+   loadVariables();
 
    window=new MainWindow;
    window->setWindowTitle("grpn");

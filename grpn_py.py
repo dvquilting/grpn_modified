@@ -1214,6 +1214,7 @@ ROW2 = [
     ('Sto', 'sto', 'Store the top number under the entered variable name.', 'op',
      'store_variable'),
     ('Rcl', 'rcl', 'Recall the entered variable onto the stack.', 'op', 'recall_variable'),
+    ('Purge', 'purge', 'Delete the entered variable.', 'op', 'purge_variable'),
     ('!', 'fact', 'Factorial (Gamma(x+1) for non-integers).', 'op', 'fact'),
 ]
 NUM789 = [
@@ -1369,6 +1370,13 @@ def help_text():
 # The calculator: stack, input line, undo, variables, commands
 # ---------------------------------------------------------------------------
 
+def valid_variable_name(name):
+    """Variable names are non-empty and have no whitespace or control
+    characters."""
+    return bool(name) and not any(ch.isspace() or ord(ch) < 32 or ord(ch) == 127
+                                  for ch in name)
+
+
 class Calculator(Modes):
     """The GRPN engine.  stack[-1] is the top of the stack (level 1)."""
 
@@ -1382,7 +1390,8 @@ class Calculator(Modes):
         self._undo = []
         # Callbacks for a user interface (all optional).
         self.on_modes_changed = None      # f()
-        self.on_variable_added = None     # f(name)
+        self.on_variables_changed = None  # f(), after a variable is added or purged
+        self.on_variables_edited = None    # f(), after Sto or Purge changes a variable
         self.on_quit = None               # f()
 
     # --- public conveniences -------------------------------------------------
@@ -1872,10 +1881,16 @@ class Calculator(Modes):
         if not text.startswith("'") or len(text) < 2:
             self.error = "Variable Error: Enter a name beginning with '."
             return None
-        if any(ch.isspace() for ch in text[1:]):
+        if not valid_variable_name(text[1:]):
             self.error = 'Variable Error: Names cannot contain whitespace.'
             return None
         return text[1:]
+
+    def _variables_changed(self, added_or_purged):
+        if added_or_purged and self.on_variables_changed:
+            self.on_variables_changed()
+        if self.on_variables_edited:
+            self.on_variables_edited()
 
     def store_variable(self):
         """Sto: copy the top value into the variable named on the input
@@ -1888,8 +1903,7 @@ class Calculator(Modes):
             return
         is_new = name not in self.variables
         self.variables[name] = self.stack[-1]
-        if is_new and self.on_variable_added:
-            self.on_variable_added(name)
+        self._variables_changed(is_new)
         self.cancel_editor()
 
     def recall_variable(self):
@@ -1905,6 +1919,18 @@ class Calculator(Modes):
         self.stack.append(self.variables[name])
         self._commit(snap)
         return True
+
+    def purge_variable(self):
+        """Purge: delete the variable named on the input line ('name)."""
+        name = self._variable_name()
+        if name is None:
+            return
+        if name not in self.variables:
+            self.error = 'Purge Error: Unknown variable.'
+            return
+        del self.variables[name]
+        self._variables_changed(True)
+        self.cancel_editor()
 
 
 # ---------------------------------------------------------------------------
@@ -2239,7 +2265,7 @@ if QtWidgets is not None:
             self.setCentralWidget(central)
 
             calc.on_modes_changed = self.modes_changed
-            calc.on_variable_added = self.variable_added
+            calc.on_variables_changed = self.variables_changed
             calc.on_quit = QtWidgets.QApplication.quit
             self.modes_changed()
             self.lcd.setFocus()
@@ -2251,6 +2277,7 @@ if QtWidgets is not None:
             rows = [[KeyButton() for _ in range(MEMORY_BUTTON_COUNT)]]
             for b in rows[0]:
                 b.setEnabled(False)
+                b.clicked.connect(lambda checked=False, b=b: self.recall(b.property('variable')))
             self.memory_buttons = rows[0]
             for row in BUTTON_ROWS:
                 buttons = []
@@ -2270,6 +2297,7 @@ if QtWidgets is not None:
                     box.addWidget(b, 1)
                 layout.addLayout(box)
                 self._equalize(row)
+            self.variables_changed()
 
         @staticmethod
         def _equalize(row):
@@ -2285,14 +2313,16 @@ if QtWidgets is not None:
             self.calc.invoke(entry)
             self.refresh()
 
-        def variable_added(self, name):
-            free = [b for b in self.memory_buttons if not b.isEnabled()]
-            if not free:
+        def variables_changed(self):
+            """The memory buttons show the first variables, oldest first."""
+            if not self.memory_buttons:
                 return
-            b = free[0]
-            b.setText(name)
-            b.setEnabled(True)
-            b.clicked.connect(lambda checked=False, n=name: self.recall(n))
+            names = list(self.calc.variables)
+            for i, b in enumerate(self.memory_buttons):
+                name = names[i] if i < len(names) else ''
+                b.setText(name.replace('&', '&&'))    # '&' is not a shortcut
+                b.setProperty('variable', name)
+                b.setEnabled(bool(name))
             self._equalize(self.memory_buttons)
 
         def recall(self, name):
@@ -2439,6 +2469,136 @@ def save_settings(calc, font_size, path=None):
         sys.stderr.write('grpn_py: could not save settings to %s: %s\n' % (path, e))
 
 
+# ---------------------------------------------------------------------------
+# Saved variables, shared with the C version: $XDG_CONFIG_HOME/grpn/variables
+#
+# Each line is a name followed by its value:
+#    value := r REAL | c REAL REAL | m ROWS COLS value...
+#    REAL  := a decimal number such as -1.25e-3, or nan or inf
+# 'c' is a complex number (real part, imaginary part); 'm' is a matrix whose
+# ROWS*COLS entries follow in row order.  Blank lines and lines starting
+# with # are ignored.
+# ---------------------------------------------------------------------------
+
+MAX_MATRIX_NESTING = 16
+MAX_MATRIX_ENTRIES = 1000000
+
+
+def variables_path():
+    return os.path.join(os.path.dirname(settings_path()), 'variables')
+
+
+def _real_text(r):
+    if r.st == NAN:
+        return 'nan'
+    if r.st == INF:
+        return 'inf'
+    return str(r.v)
+
+
+def value_text(value):
+    """A Real, Cmplx or Matrix in the saved-variables format."""
+    if isinstance(value, Real):
+        return 'r ' + _real_text(value)
+    if isinstance(value, Cmplx):
+        return 'c %s %s' % (_real_text(value.re), _real_text(value.im))
+    if isinstance(value, Matrix):
+        return ' '.join(['m %d %d' % (value.rows, value.cols)] +
+                        [value_text(x) for row in value.data for x in row])
+    raise TypeError('cannot save %r' % (value,))
+
+
+def _read_real(tokens):
+    t = next(tokens)
+    if t == 'nan':
+        return NAN_REAL
+    if t == 'inf':
+        return INF_REAL
+    if '_' in t:                    # Decimal accepts 1_000; the C version doesn't
+        raise ValueError(t)
+    try:
+        v = Decimal(t)
+    except decimal.InvalidOperation:
+        raise ValueError(t)
+    r = Real.make(v)
+    if not v.is_finite() or r.st != OK:     # NaN and Inf only as words
+        raise ValueError(t)
+    return r
+
+
+def _read_value(tokens, depth=0):
+    if depth > MAX_MATRIX_NESTING:
+        raise ValueError('matrix nested too deeply')
+    kind = next(tokens)
+    if kind == 'r':
+        return _read_real(tokens)
+    if kind == 'c':
+        return Cmplx(_read_real(tokens), _read_real(tokens))
+    if kind == 'm':
+        rows, cols = int(next(tokens)), int(next(tokens))
+        if rows < 1 or cols < 1 or rows * cols > MAX_MATRIX_ENTRIES:
+            raise ValueError('bad matrix size')
+        return Matrix([[_read_value(tokens, depth + 1) for _ in range(cols)]
+                       for _ in range(rows)])
+    raise ValueError(kind)
+
+
+def parse_value(text):
+    """The value written by value_text()."""
+    tokens = iter(text.split())
+    value = _read_value(tokens)
+    if next(tokens, None) is not None:
+        raise ValueError('extra text')
+    return value
+
+
+def load_variables(calc, path=None):
+    """Add the saved variables to calc.  A missing file means there are
+    none; unreadable lines are skipped."""
+    path = path or variables_path()
+    try:
+        with open(path, encoding='utf-8') as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        return
+    except (OSError, UnicodeError) as e:
+        sys.stderr.write('grpn_py: could not read %s: %s\n' % (path, e))
+        return
+    for lineno, line in enumerate(lines, 1):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        name, rest = (line.split(None, 1) + [''])[:2]
+        try:
+            if not valid_variable_name(name):
+                raise ValueError(name)
+            calc.variables[name] = parse_value(rest)
+        except (ValueError, StopIteration):
+            sys.stderr.write('grpn_py: %s:%d: ignoring unreadable variable\n' % (path, lineno))
+    if calc.on_variables_changed:
+        calc.on_variables_changed()
+
+
+def save_variables(calc, path=None):
+    """Rewrite the file.  It is written beside the old one and renamed over
+    it, so a failed write leaves the old file in place."""
+    path = path or variables_path()
+    tmp = path + '.tmp'
+    try:
+        os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+        with open(tmp, 'w', encoding='utf-8') as f:
+            f.write('# GRPN variables (see variables.h in the grpn sources)\n')
+            for name, value in calc.variables.items():
+                f.write('%s %s\n' % (name, value_text(value)))
+        os.replace(tmp, path)
+    except OSError as e:
+        sys.stderr.write('grpn_py: could not save variables to %s: %s\n' % (path, e))
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     opts = parse_args(argv)
@@ -2452,6 +2612,8 @@ def main(argv=None):
     app.setApplicationName('grpn')
     calc = Calculator()
     font_size = load_settings(calc)
+    load_variables(calc)
+    calc.on_variables_edited = lambda: save_variables(calc)
     window = MainWindow(calc, font_size=font_size, **opts)
     window.show()
     status = app.exec_()

@@ -13,10 +13,18 @@ Cartesian or polar form.
 Named variables can hold any calculator value. Type an apostrophe
 followed by a name and press Sto to copy the top stack value into the
 variable (for example, `'abc` then Sto). Enter the same name and press
-Rcl to push a copy of the stored value back onto the stack.
-The first ten new variable names also appear in the memory-button row
-above the keypad; clicking one of these buttons recalls that variable.
-Additional variables remain available through the Rcl command.
+Rcl to push a copy of the stored value back onto the stack, or Purge
+to delete the variable. The first ten variables also appear in the
+memory-button row above the keypad; clicking one of these buttons
+recalls that variable. Additional variables remain available through
+the Rcl command, and move into the memory-button row as earlier
+variables are purged.
+
+Variables are kept between runs in `$XDG_CONFIG_HOME/grpn/variables`
+(normally `~/.config/grpn/variables`), which is rewritten each time a
+variable is stored or purged. The C and Python versions share this
+file. It is plain text, one variable per line; see `variables.h` for
+the format.
 
 GRPN is copyrighted under the terms of the GNU General Public
 License.  See the file LICENSE for more details.
